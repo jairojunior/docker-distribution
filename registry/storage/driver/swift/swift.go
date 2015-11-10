@@ -656,7 +656,10 @@ func (d *driver) Delete(ctx context.Context, path string) error {
 		for i, obj := range objects {
 			filenames[i] = obj.Name
 		}
-		if _, err := d.Conn.BulkDelete(d.Container, filenames); err != nil {
+		_, err = d.Conn.BulkDelete(d.Container, filenames)
+		// Don't fail on ObjectNotFound because eventual consistency
+		// makes this situation normal.
+		if err != nil && err != swift.Forbidden && err != swift.ObjectNotFound {
 			if err == swift.ContainerNotFound {
 				return storagedriver.PathNotFoundError{Path: path}
 			}
